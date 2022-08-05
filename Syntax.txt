@@ -1,0 +1,87 @@
+
+* Import data from Excel.
+GET DATA
+  /TYPE=XLSX
+  /FILE=                       * Your file directory name goes here!.
+  /SHEET=name 'Raw data'
+  /CELLRANGE=FULL
+  /READNAMES=ON
+  /DATATYPEMIN PERCENTAGE=95.0
+  /HIDDEN IGNORE=YES.
+EXECUTE.
+DATASET NAME DataSet1 WINDOW=FRONT.
+
+* Change format of raw data (Q1 - Q3).
+DATASET ACTIVATE DataSet1.
+AUTORECODE VARIABLES=Whatisyourgender HowwouldyouratethequalityoftheWiFiatyourhome 
+    Whatagegroupareyouin 
+  /INTO Q1 Q2 Q3
+  /BLANK=MISSING
+  /PRINT.
+
+* Original order to Q2 responses.
+FREQUENCIES VARIABLES=Q2
+  /ORDER=ANALYSIS.
+
+* Reorder Q2.
+RECODE Q2 (1=1) (5=2) (3=3) (2=4) (4=5) (SYSMIS=SYSMIS).
+EXECUTE.
+* Relabel values.
+VALUE LABELS Q2 1 'Excellent' 2 'Very good' 3 'Good' 4 'Fair' 5 'Poor'
+
+* Check that reordering is correct.
+FREQUENCIES VARIABLES=Q2
+  /ORDER=ANALYSIS.
+
+* Original order to Q3 responses.
+FREQUENCIES VARIABLES=Q3
+  /ORDER=ANALYSIS.
+
+* Reorder Q3.
+RECODE Q3 (1=1) (2=3) (3=2)  (SYSMIS=SYSMIS).
+EXECUTE.
+* Relabel values.
+VALUE LABELS Q3 1 '<20 years' 2 '20 - 30 years' 3 '>30 years'
+
+* Check that reordering is correct.
+FREQUENCIES VARIABLES=Q3
+  /ORDER=ANALYSIS.
+
+* Recode Q4 to cater for missing data.
+RECODE OnaveragehowmanyhoursadaydoyouuseyourWiFiathome (MISSING=999) (ELSE=Copy) INTO Q4.
+VARIABLE LABELS  Q4 'How many ...'.
+EXECUTE.
+
+* Let SPSS know that 999 is a missing value.
+MISSING VALUES Q4 (999)
+
+* Assigning a subject ID.
+COMPUTE CaseNum=$CASENUM.
+EXECUTE.
+
+* Change levels of measurement.
+VARIABLE LEVEL Q2 (Ordinal)
+/ Q3 Q4 (Scale)
+
+* If you wanted to rename a label.
+VARIABLE LABELS Q1 'Gender'
+
+* Change decimal places.
+formats Q4 CaseNum (f16.0)
+
+* Remove unwanted/duplicate variables.
+DELETE VARIABLES Whatisyourgender
+HowwouldyouratethequalityoftheWiFiatyourhome
+Whatagegroupareyouin
+OnaveragehowmanyhoursadaydoyouuseyourWiFiathome
+
+* Ordering variables by Names.
+SORT VARIABLES BY NAME (A).
+
+* Save new dataset.
+SAVE OUTFILE= * Directory name and file name does here.
+  /COMPRESSED.
+
+
+
+
